@@ -1,0 +1,8 @@
+1. Create Blackberry account and generate EC Key
+2. Install python (if necessary)
+3. Install Script
+4. Setup Windows Task in Windows Task Scheduler
+5. Discuss severity for labels?
+	Do we want to include them?
+	What do we want the thresholds to be?
+6. Figure out if alerts stay when labels are deleted

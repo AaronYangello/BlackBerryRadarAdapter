@@ -1,0 +1,40 @@
+Liquid Trucking Blackberry Radar App
+• Current thought is to either:
+	1. Maintain a list of maintenance depot coordinates and radius
+	2. Create geofences around each maintenance depot
+		POST /geofences
+		asset.sensor data model has current location and geofences asset is currently in: https://api.radar.blackberry.com/docs/en/dev_guide/data_stream_model/asset_sensor/
+		asset.events get created when asset enters and leaves geofence: https://api.radar.blackberry.com/docs/en/dev_guide/data_stream_model/asset_event/
+• Then use an asset's current coordinates, or ideally their likely route to a destination, to determine if the asset will be near enough to a depot and near enough to required maintenance to warrant a diversion.
+	○ GET /assets/data
+		◘ NOTE: calls to /asset/data need to be acknowlegded with a PUT request https://api.radar.blackberry.com/docs/en/dev_guide/data_stream/workflow/
+	○ is there an endpoint to retrieve current coordinates or planned route for a single asset?
+	○ If planned route isn't available, we can make the radius or geofence really big and use the heading from asset.sensor data stream to determine if asset is moving in the direction of the depot
+
+• Requires:
+	○ Programatic way to generate access token
+		◘ Access tokens routinely expire, so new tokens need to be generated when expiration gets close. Is there an established way to accomplish this?
+		
+		
+Dashboard interface has the functionality we need for this:
+	1. Create necessary labels
+		maintenance due
+		maintenance due soon
+		hi-pri - no interuption
+	2. Create geofences around maintenance depots
+	3. Create alerts for when asset enters/exits selected (maintenance depot) geo fence
+		Asset label: due for maintenance/due for maintenance soon
+		except Asset label: hi-pri - no interuption
+		send email to Alex/Evan/etc.
+
+Who where do labels get set and how often?		
+	Trimble: Need automated way to update asset labels
+		set up email alert from trimble with asset status update
+		program will process asset status and make update to blackberry system
+	Blackberry: no adapter needed
+	
+	
+Description = Label
+Green/Yellow/Red
+csv
+
