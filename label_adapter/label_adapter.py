@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--white-list-file', type=Path, default='label_adapter/component_code_whitelist.txt', help='Path to the file with a list of component codes to look for.')
     parser.add_argument('-k', '--api-key-file', type=Path, default='label_adapter/key.pem', help='Path to the Blackberry Api key file.')
     parser.add_argument('-l', '--log-level', choices=['info', 'debug', 'error'], default='info', help='Set the log level (default: info)')
-    parser.add_argument('-t', '--test-level', choices=['full', 'read_only', 'not_test'], default='not_test', help='Indicates whether this is a test run. Will read current assets and CSVs')
+    parser.add_argument('-t', '--test-level', choices=['full', 'read_only', 'not_test'], default='not_test', help='Indicates what kind of test will be run, if any. not_test will perform real read and write to BlackBerry servers; read_only will simulate just writing; and full will simulate both read and write.')
     args = parser.parse_args()
 
     whitelist_file = args.white_list_file.resolve()

@@ -21,7 +21,7 @@ pip install requirements.txt
 To run the script, navigate to the project directory and execute the following command:
 
 ```bash
-python label_adapter.py <report_directory> <report_archive_directory> [-l <log_level>] [-t]
+python label_adapter.py [-h] [-w WHITE_LIST_FILE] [-k API_KEY_FILE] [-l {info,debug,error}] [-t {full,read_only,not_test}] report_directory report_archive_directory
 ```
 
 positional arguments:  
@@ -29,9 +29,11 @@ positional arguments:
 *  report_archive_directory &ensp; Path to the directory where CSV reports from Trimble should be moved after processing.  
   
 options:  
-*  -h, --help &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; show this help message and exit  
-*  -l, --log-level {info,debug,error} &nbsp; set the log level (default: info)  
-*  -t, --test &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp; Indicates whether this is a test run. Will read current assets and CSVs
+*  -h, --help &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp; Show this help message and exit  
+*  -w,  --white-list-file WHITE_LIST_FILE &emsp;&ensp;&nbsp; Path to the file with a list of component codes to look for.  
+*  -k, --api-key-file API_KEY_FILE &emsp;&emsp;&emsp;&emsp;&ensp; Path to the Blackberry Api key file.  
+*  -l, --log-level {info,debug,error} &emsp;&emsp;&emsp;&ensp;&nbsp; Set the log level (default: info)  
+*  -t, --test-level {full, read_only, not_test} &ensp; Indicates what kind of test will be run, if any. not_test will perform real read and write to BlackBerry servers; read_only will simulate just writing; and full will simulate both read and write.
 
 **Example Usage**
 ----------------
