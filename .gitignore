@@ -95,3 +95,4 @@ ENV/
 key.pem
 public key.txt
 tests/output
+.vscode/

@@ -11,7 +11,7 @@ import os
 import re
 
 class Helpers:
-    def __init__(self, input_dir:Path, output_dir:Path, logger:Logger, log_level_str:str, max_directories:int):
+    def __init__(self, input_dir:Path, output_dir:Path, logger:Logger, log_level_str:str, max_directories:int, test_level:str):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.archive_dir = self.create_archive_dir()
@@ -19,6 +19,11 @@ class Helpers:
         self.configure_logger(log_level_str)
         self.csv_files = self.get_csv_files(input_dir)
         self.delete_oldest_directory(max_directories)
+        self.whitelist_file = Path('')
+        if test_level == 'not_test':
+            self.is_test = False
+        else:
+            self.is_test = True
 
     def get_csv_files(self, input_dir:Path) -> list:
         self.logger.debug(f'Retrieving CSVs from {str(input_dir)}')
@@ -40,11 +45,11 @@ class Helpers:
         archive_dir.mkdir(parents=True, exist_ok=True)
         return archive_dir
         
-    def archive_csv_files(self, is_test:bool) -> None: 
+    def archive_csv_files(self) -> None: 
         self.logger.debug(f'Moving {len(self.csv_files)} CSVs to archive folder {self.archive_dir}')
         try:
             for file in self.csv_files:
-                if is_test:
+                if self.is_test:
                     shutil.copy(file, self.archive_dir)
                 else:
                     shutil.move(file, self.archive_dir)
@@ -54,7 +59,7 @@ class Helpers:
     def process_csv(self,pathToCsv:str, assetLabelMap: dict, label_bases_processed:set) -> None:
         self.logger.debug(f'Processing {pathToCsv}')
         label = ''
-        with open('label_adapter/component_code_whitelist.txt') as file:
+        with self.whitelist_file.open('r') as file:
             comp_code_whitelist = [line.rstrip().lower() for line in file]
             self.logger.debug(f'Label whitelist {comp_code_whitelist}')
         with open(pathToCsv, 'r') as file:

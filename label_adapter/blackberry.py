@@ -2,6 +2,7 @@
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from logging import Logger
+from pathlib import Path
 from uuid import uuid4
 import requests
 import time
@@ -9,21 +10,25 @@ import json
 import jwt
 
 class BlackBerryAPI:
-    def __init__(self, key_file:str, logger:Logger, is_test:bool):
+    def __init__(self, key_file:Path, logger:Logger, test_level:str):
         self.base_url = 'https://api.radar.blackberry.com/1'
         self.logger = logger
         self.access_token = None
         self.key_file = key_file
-        self.is_test = is_test
+        self.do_read = False
+        self.do_write = False
+        if test_level == 'not_test':
+            self.do_read = True
+            self.do_write = True
+        elif test_level == 'read_only':
+            self.do_read = True
 
     def generate_access_token(self, write_scope=False) -> str:
         self.logger.debug('Generating a new access key')
-        if self.is_test:
-            self.logger.info('Testing...')
-            response = self.generate_access_token_test_response()
-        else:
+            
+        if (not write_scope and self.do_read) or (write_scope and self.do_write):
             # Load Private Key
-            with open(self.key_file, "rb") as key_file:
+            with self.key_file.open("rb") as key_file:
                 private_key = serialization.load_pem_private_key(
                     key_file.read(),
                     password=None,  # If your key has a password, add it here
@@ -69,6 +74,9 @@ class BlackBerryAPI:
 
             # Make the POST request
             response = requests.post(url, headers=headers, data=json_payload)
+        else:
+            self.logger.info('Testing...')
+            response = self.generate_access_token_test_response()
 
         if response.status_code == 200:
             self.logger.debug(f'Access token successfully generated:\n {self.log_request_response(response)}')
@@ -80,10 +88,8 @@ class BlackBerryAPI:
     def add_label(self, asset_id, new_label, retry=True):
         self.logger.debug(f'Adding label {new_label} to asset with ID {asset_id}')
         success = False
-        if self.is_test:
-            self.logger.info('Testing...')
-            response = self.add_label_test_response()
-        else:
+        
+        if self.do_write:
             url = f'{self.base_url}/assets/{asset_id}/labels'
             headers = {
                 "Authorization": f"Bearer {self.access_token}",
@@ -93,6 +99,10 @@ class BlackBerryAPI:
                 "name": f"{new_label}"
             }
             response = requests.post(url, headers=headers, json=data)
+        else:
+            self.logger.info('Testing...')
+            response = self.add_label_test_response()
+
         if response.status_code == 201:
             success = True
             self.logger.debug(f'Label added successfully:\n {self.log_request_response(response)}')
@@ -111,16 +121,17 @@ class BlackBerryAPI:
     def get_assets(self, retry=True):
         self.logger.debug('Retrieving assets')
         assets = {}
-        if self.is_test:
-            self.logger.info('Testing...')
-            response = self.get_assets_test_response()
-        else:
+        
+        if self.do_read:
             url = f'{self.base_url}/assets'
             headers = {
-                "Authorization": f"Bearer {self.base_url}",
+                "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": "application/json"
             }
             response = requests.get(url, headers=headers)
+        else:
+            self.logger.info('Testing...')
+            response = self.get_assets_test_response()
 
         if response.status_code == 200:
             for x in response.json():
@@ -139,16 +150,17 @@ class BlackBerryAPI:
     def get_asset_labels(self, asset_id, retry=True):
         self.logger.debug(f'Retrieving asset labels for asset with ID {asset_id}')
         labels = {}
-        if self.is_test:
-            self.logger.info('Testing...')
-            response = self.get_asset_labels_test_response()
-        else:
+        
+        if self.do_read:
             url = f'{self.base_url}/assets/{asset_id}/labels'
             headers = {
-                "Authorization": f"Bearer {self.base_url}",
+                "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": "application/json"
             }
             response = requests.get(url, headers=headers)
+        else:
+            self.logger.info('Testing...')
+            response = self.get_asset_labels_test_response()
         if response.status_code == 200:
             items = response.json()['items']
             for x in items: labels[x['name']] = x['id']
@@ -166,16 +178,17 @@ class BlackBerryAPI:
     def delete_label(self, asset_id, label_id, retry=True):
         self.logger.debug(f'Deleting label {label_id} from asset with ID {asset_id}')
         success = True
-        if self.is_test:
-            self.logger.info('Testing...')
-            response = self.delete_label_test_response()
-        else:
+            
+        if self.do_write:
             url = f'{self.base_url}/assets/{asset_id}/labels/{label_id}'
             headers = {
-                "Authorization": f"Bearer {self.base_url}",
+                "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": "application/json"
             }
             response = requests.delete(url, headers=headers)
+        else:
+            self.logger.info('Testing...')
+            response = self.delete_label_test_response()
 
         if response.status_code == 204:
             success = True
@@ -191,7 +204,7 @@ class BlackBerryAPI:
         return success
 
     def log_request_response(self, response):
-        if self.is_test:
+        if type(response) is self.TestResponse:
             res = f"---------------- Test Response ----------------\n"
             res += f"Status Code: {response.status_code}\n"
             res += f"JSON: {response.json()}"
@@ -211,7 +224,10 @@ class BlackBerryAPI:
     class TestResponse:
         def __init__(self, status_code:int, res_json=''):
             self.status_code = status_code
-            self.res_json = json.loads(res_json)
+            try:
+                self.res_json = json.loads(res_json)
+            except Exception:
+                self.res_json = ''
         def json(self):
             return self.res_json
         
